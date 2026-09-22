@@ -1,0 +1,124 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Ezurio LLVM",
+            "type": "shell",
+            "command": "./e.sh cmake --build build_ezurio_llvm",
+            "group": { "kind": "build" }
+        },
+        {
+            "label": "Build Ezurio LLVM lcxx",
+            "type": "shell",
+            "command": "./lcxx.sh cmake --build build_ezurio_llvm",
+            "group": { "kind": "build" }
+        },
+        {
+            "label": "West Build Ezurio LLVM",
+            "type": "shell",
+            "command": "./e.sh ./build-ezurio-llvm-log.sh",
+            "group": "build"
+        },
+        {
+            "label": "West Build Ezurio GCC",
+            "type": "shell",
+            "command": "./build-ezurio-gcc.sh",
+            "group": "build"
+        },
+        {
+            "label": "Build Ezurio GCC",
+            "type": "shell",
+            "command": "./h.sh cmake --build build_ezurio_gcc16_human",
+            "group": "build"
+        },
+        {
+            "label": "West Build Ezurio LLVM (no log)",
+            "type": "shell",
+            "command": "./e.sh ./build-ezurio-llvm.sh",
+            "group": "build"
+        },
+        {
+            "label": "West Build Ezurio LLVM lcxx",
+            "type": "shell",
+            "command": "./lcxx.sh ./build-ezurio-llvm.sh",
+            "group": "build"
+        },
+        {
+            "label": "West Build Ezurio LLVM Log with libc++",
+            "type": "shell",
+            "command": "./lcxx.sh ./build-ezurio-llvm-log-lcxx.sh",
+            "group": "build"
+        },
+        {
+            "label": "West Build Ezurio LLVM Log",
+            "type": "shell",
+            "command": "./e.sh ./build-ezurio-llvm-log.sh",
+            "group": "build"
+        },
+        {
+            "label": "Flash Ezurio LLVM over JLINK-EDU",
+            "type": "shell",
+            "command": "./e.sh west flash -d build_ezurio_llvm --dev-id 802005000"
+        },
+        {
+            "label": "Flash Ezurio LLVM over JLINK-EDU (Erase)",
+            "type": "shell",
+            "command": "./e.sh west flash -d build_ezurio_llvm --dev-id 802005000 --erase"
+        },
+        {
+            "label": "Flash Ezurio GCC over JLINK-EDU",
+            "type": "shell",
+            "command": "./e.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000"
+        },
+        {
+            "label": "Flash Ezurio GCC over JLINK-EDU (Erase)",
+            "type": "shell",
+            "command": "./e.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000 --erase"
+        },
+        {
+            "label": "Core: extract",
+            "type": "shell",
+            "command": "coredumps/scripts/extract_coredump.sh"
+        },
+        {
+            "label": "Core: info",
+            "type": "shell",
+            "command": "coredumps/scripts/show_coredump_info.sh"
+        },
+        {
+            "label": "Core: clear",
+            "type": "shell",
+            "command": "coredumps/scripts/clear_coredump.sh"
+        },
+        {
+            "label": "Core: run",
+            "type": "shell",
+            "command": "coredumps/scripts/start_coredump_server.sh &"
+        },
+        {
+            "label": "Core: stop",
+            "type": "shell",
+            "command": "coredumps/scripts/kill_existing_coredump_server.sh"
+        },
+        {
+            "label": "NRFUtil Reset",
+            "type": "shell",
+            "command": "nrfutil device reset"
+        },
+        {
+            "label": "Run VSCode GCC",
+            "type": "shell",
+            "command": "./h.sh code ."
+        },
+        {
+            "label": "Run VSCode LLVM libc++",
+            "type": "shell",
+            "command": "./lcxx.sh code ."
+        },
+        {
+            "label": "Run VSCode LLVM",
+            "type": "shell",
+            "command": "./e.sh code ."
+        }
+    ]
+}

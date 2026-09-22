@@ -1,0 +1,25 @@
+/delete-node/ &code_partition;
+&cpuapp_rram {
+	status = "okay";
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x0 DT_SIZE_K(62)>;
+		};
+		slot0_partition: partition@f800 {
+			label = "image-0";
+			reg = <0xf800 DT_SIZE_K(900)>;
+		};
+		coredump_partition: partition@f1000 {
+			label = "coredump-partition";
+			reg = <0xf1000 DT_SIZE_K(256)>;
+		};
+		breadcrumbs_partition: partition@15b800{
+			label = "breadcrumbs-partition";
+			reg = <0x15b800 DT_SIZE_K(2)>;
+		};
+	};
+};
