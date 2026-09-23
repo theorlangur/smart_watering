@@ -34,8 +34,6 @@
 #include <nrfzbmcpp/zcl/zbm_zcl_co2.hpp>
 #include <nrfzbmcpp/misc_zc/zbm_misc_zc_air_q.hpp>
 #include <nrfzbmcpp/misc_zc/zbm_misc_zc_status.hpp>
-#include "zb/zbm_ld2412.hpp"
-#include "zb/zbm_dev_ctrl.hpp"
 
 #include <atomic>
 
@@ -131,8 +129,8 @@ constexpr uint16_t kDEV_ID = 0xBAAD;
 
 
 /* Zigbee device application context storage. */
-static constinit device_ctx_t dev_ctx = zbm::const_init_device<device_ctx_t
-{
+//static constinit device_ctx_t dev_ctx = zbm::const_init_device<device_ctx_t
+//{
 	//   .ep1={
 	//.basic_attr = {
 	//    {
@@ -171,12 +169,12 @@ static constinit device_ctx_t dev_ctx = zbm::const_init_device<device_ctx_t
 	//    ,.cmd_take_statistic_snapshot = on_cmd_do_stat_snapshot<ld2412_2>
 	//},
 	//   }
-}
->{}
-;
+//}
+//>{}
+//;
 
-using zbm_dev_t = zbm::device_full_t<^^dev_ctx>;
-constinit static zbm_dev_t zb_ctx{};
+//using zbm_dev_t = zbm::device_full_t<^^dev_ctx>;
+//constinit static zbm_dev_t zb_ctx{};
 
 //a shortcut for a convenient access
 //constinit static auto &zb_ep = zb_ctx.ep<kMMW_EP>();
@@ -209,23 +207,23 @@ void zboss_signal_handler(zb_bufid_t bufid)
         zb_zdo_app_signal_hdr_t *pHdr;
         auto signalId = zb_get_app_signal(bufid, &pHdr);
 
-	auto ret = zbm::tpl_signal_handler<^^dev_ctx, zb_ctx,
-	    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_LEAVE, ^^zb_on_leave},
-	    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_ERROR, ^^zb_on_error},
-	    zbm::sig_handlers_t{ZB_BDB_SIGNAL_DEVICE_REBOOT, ^^on_zigbee_start},
-	    zbm::sig_handlers_t{ZB_BDB_SIGNAL_STEERING, ^^on_zigbee_start},
-	    zbm::sig_handlers_t{ZB_COMMON_SIGNAL_CAN_SLEEP, ^^zb_sleep_now}
-	   >(bufid);
-    const uint32_t LOCAL_ERR_CODE = (uint32_t) (-ret);	
-    if (LOCAL_ERR_CODE != RET_OK) {				
-	zb_osif_abort();				
-    }							
+	//auto ret = zbm::tpl_signal_handler<^^dev_ctx, zb_ctx,
+	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_LEAVE, ^^zb_on_leave},
+	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_ERROR, ^^zb_on_error},
+	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_DEVICE_REBOOT, ^^on_zigbee_start},
+	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_STEERING, ^^on_zigbee_start},
+	//    zbm::sig_handlers_t{ZB_COMMON_SIGNAL_CAN_SLEEP, ^^zb_sleep_now}
+	//   >(bufid);
+	//   const uint32_t LOCAL_ERR_CODE = (uint32_t) (-ret);	
+	//   if (LOCAL_ERR_CODE != RET_OK) {				
+	//zb_osif_abort();				
+	//   }							
 }
 
 int main(void)
 {
-    static_assert(atomic_state_t::is_always_lock_free);
-    disable_hw_wdt();
+    //static_assert(atomic_state_t::is_always_lock_free);
+    //disable_hw_wdt();
 
     int err = settings_subsys_init();
 
