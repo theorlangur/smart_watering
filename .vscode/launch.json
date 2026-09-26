@@ -6,38 +6,9 @@
     "version": "0.2.0",
     "configurations": [
         {
-          "name": "Cortex-Debug Start",
-          "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_llvm/presence_multi_v2/zephyr/zephyr.elf",
-          "request": "launch",
-          "type": "cortex-debug",
-          "servertype": "jlink",
-          "interface": "swd",
-          "device": "cortex-m33",
-          "rtos": "Zephyr",
-          "runToMain": true,
-          "preRestartCommands": [
-            "enable breakpoint"
-          ]
-        },
-        {
-          "name": "Cortex-Debug Attach",
-          "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_llvm/presence_multi_v2/zephyr/zephyr.elf",
-          "request": "attach",
-          "type": "cortex-debug",
-          "servertype": "jlink",
-          "interface": "swd",
-          "device": "cortex-m33",
-          "rtos": "Zephyr",
-          "preRestartCommands": [
-            "enable breakpoint"
-          ]
-        },
-        {
           "name": "Cortex-Debug Attach GCC",
           "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/presence_multi_v2/zephyr/zephyr.elf",
+          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
           "request": "attach",
           "type": "cortex-debug",
           "servertype": "jlink",
@@ -51,36 +22,27 @@
         {
           "name": "Cortex-Debug Start GCC",
           "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/presence_multi_v2/zephyr/zephyr.elf",
+          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
           "request": "launch",
           "type": "cortex-debug",
           "servertype": "jlink",
           "interface": "swd",
           "device": "cortex-m33",
           "rtos": "Zephyr",
-          "runToMain": true,
-          "preRestartCommands": [
-            "enable breakpoint"
-          ]
-        },
-        {
-            "name": "Launch",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build_ezurio_llvm/presence_multi_v2/zephyr/zephyr.elf",
-            "cwd": "${workspaceFolder}",
-            "miDebuggerPath": "/home/theorlangur/ncs/toolchains/7cbc0036f4/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
-            "miDebuggerServerAddress": "localhost:44477",
-            "useExtendedRemote": true,
-            "stopAtConnect": false,
-            "stopAtEntry": false,
-            "MIMode": "gdb"
+          "runToEntryPoint": "",
+          // "preRestartCommands": [
+          //   "enable breakpoint"
+          // ],
+          "postResetCommands": [
+            "stepi"
+          ],
+          "showDevDebugOutput": "none"
         },
         {
             "name": "CoreDump",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build_ezurio_llvm/presence_multi_v2/zephyr/zephyr.elf",
+            "program": "${workspaceFolder}/build_ezurio_llvm/watering/zephyr/zephyr.elf",
             "cwd": "${workspaceFolder}",
             "miDebuggerPath": "/home/theorlangur/ncs/toolchains/7cbc0036f4/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
             "miDebuggerServerAddress": "localhost:1234",
@@ -117,7 +79,8 @@
         },
         {
             "name": "Launch NRF",
-            "type": "nrf-connect",
+            "type": "nrf-debug",
+            "request": "launch"
         }
     ]
 }

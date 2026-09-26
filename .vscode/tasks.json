@@ -16,12 +16,12 @@
         {
             "label": "Flash Ezurio GCC over JLINK-EDU",
             "type": "shell",
-            "command": "./e.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000"
+            "command": "./h.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000"
         },
         {
             "label": "Flash Ezurio GCC over JLINK-EDU (Erase)",
             "type": "shell",
-            "command": "./e.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000 --erase"
+            "command": "./h.sh west flash -d build_ezurio_gcc16_human --dev-id 802005000 --erase"
         },
         {
             "label": "Core: extract",
@@ -57,6 +57,11 @@
             "label": "Run VSCode GCC",
             "type": "shell",
             "command": "./h.sh code ."
+        },
+        {
+            "label": "Run VSCode Native",
+            "type": "shell",
+            "command": "./n.sh code ."
         }
     ]
 }

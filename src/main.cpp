@@ -10,10 +10,10 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/settings/settings.h>
-#include <dk_buttons_and_leds.h>
-#include <nrf_general/led.h>
+//#include <dk_buttons_and_leds.h>
+//#include <nrf_general/led.h>
 
-#include <zephyr/drivers/sensor.h>
+//#include <zephyr/drivers/sensor.h>
 //#include <zephyr/drivers/sensor/ens160.h>
 
 #include <zephyr/drivers/hwinfo.h>
@@ -37,34 +37,34 @@
 
 #include <atomic>
 
-extern "C"{
-#include <zephyr/debug/coredump.h>
-
-void nrf_flash_skip_sync(bool skip);
-}
+//extern "C"{
+//#include <zephyr/debug/coredump.h>
+//
+//void nrf_flash_skip_sync(bool skip);
+//}
 
 constexpr bool kDebug = false;
 
 #define BREADCRUMBS_PARTITION		breadcrumbs_partition
 #define BREADCRUMBS_PARTITION_ID	FIXED_PARTITION_ID(BREADCRUMBS_PARTITION)
 
-#if !FIXED_PARTITION_EXISTS(BREADCRUMBS_PARTITION)
-#error "Need a fixed partition named 'breadcrumbs-partition'!"
-#endif
-
-/* Note that currently external memories are not supported */
-#define FLASH_CONTROLLER	\
-	DT_PARENT(DT_PARENT(DT_NODELABEL(BREADCRUMBS_PARTITION)))
-
-#define FLASH_WRITE_SIZE	DT_PROP(FLASH_CONTROLLER, write_block_size)
-#define FLASH_BUF_SIZE \
-	MAX(FLASH_WRITE_SIZE, ROUND_UP(CONFIG_DEBUG_COREDUMP_FLASH_CHUNK_SIZE, FLASH_WRITE_SIZE))
-#if DT_NODE_HAS_PROP(FLASH_CONTROLLER, erase_block_size)
-#define DEVICE_ERASE_BLOCK_SIZE DT_PROP(FLASH_CONTROLLER, erase_block_size)
-#else
-/* Device has no erase block size */
-#define DEVICE_ERASE_BLOCK_SIZE 1
-#endif
+//#if !FIXED_PARTITION_EXISTS(BREADCRUMBS_PARTITION)
+//#error "Need a fixed partition named 'breadcrumbs-partition'!"
+//#endif
+//
+///* Note that currently external memories are not supported */
+//#define FLASH_CONTROLLER	\
+//	DT_PARENT(DT_PARENT(DT_NODELABEL(BREADCRUMBS_PARTITION)))
+//
+//#define FLASH_WRITE_SIZE	DT_PROP(FLASH_CONTROLLER, write_block_size)
+//#define FLASH_BUF_SIZE \
+//	MAX(FLASH_WRITE_SIZE, ROUND_UP(CONFIG_DEBUG_COREDUMP_FLASH_CHUNK_SIZE, FLASH_WRITE_SIZE))
+//#if DT_NODE_HAS_PROP(FLASH_CONTROLLER, erase_block_size)
+//#define DEVICE_ERASE_BLOCK_SIZE DT_PROP(FLASH_CONTROLLER, erase_block_size)
+//#else
+///* Device has no erase block size */
+//#define DEVICE_ERASE_BLOCK_SIZE 1
+//#endif
 
 /**********************************************************************/
 /* Zigbee Declarations and Definitions                                */
@@ -202,23 +202,23 @@ void zb_on_error()
  * @param[in]   bufid   Reference to the Zigbee stack buffer
  *                      used to pass signal.
  */
-void zboss_signal_handler(zb_bufid_t bufid)
-{
-        zb_zdo_app_signal_hdr_t *pHdr;
-        auto signalId = zb_get_app_signal(bufid, &pHdr);
-
-	//auto ret = zbm::tpl_signal_handler<^^dev_ctx, zb_ctx,
-	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_LEAVE, ^^zb_on_leave},
-	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_ERROR, ^^zb_on_error},
-	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_DEVICE_REBOOT, ^^on_zigbee_start},
-	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_STEERING, ^^on_zigbee_start},
-	//    zbm::sig_handlers_t{ZB_COMMON_SIGNAL_CAN_SLEEP, ^^zb_sleep_now}
-	//   >(bufid);
-	//   const uint32_t LOCAL_ERR_CODE = (uint32_t) (-ret);	
-	//   if (LOCAL_ERR_CODE != RET_OK) {				
-	//zb_osif_abort();				
-	//   }							
-}
+//void zboss_signal_handler(zb_bufid_t bufid)
+//{
+//        zb_zdo_app_signal_hdr_t *pHdr;
+//        auto signalId = zb_get_app_signal(bufid, &pHdr);
+//
+//	//auto ret = zbm::tpl_signal_handler<^^dev_ctx, zb_ctx,
+//	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_LEAVE, ^^zb_on_leave},
+//	//    zbm::sig_handlers_t{ZB_ZDO_SIGNAL_ERROR, ^^zb_on_error},
+//	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_DEVICE_REBOOT, ^^on_zigbee_start},
+//	//    zbm::sig_handlers_t{ZB_BDB_SIGNAL_STEERING, ^^on_zigbee_start},
+//	//    zbm::sig_handlers_t{ZB_COMMON_SIGNAL_CAN_SLEEP, ^^zb_sleep_now}
+//	//   >(bufid);
+//	//   const uint32_t LOCAL_ERR_CODE = (uint32_t) (-ret);	
+//	//   if (LOCAL_ERR_CODE != RET_OK) {				
+//	//zb_osif_abort();				
+//	//   }							
+//}
 
 int main(void)
 {
@@ -229,10 +229,10 @@ int main(void)
 
     printk("main\r\n");
 
-    zigbee_enable();
+    //zigbee_enable();
     while (1) {
 	printk("Main: sleep forever\r\n");
-	k_sleep(K_FOREVER);
+	k_msleep(1000);
     }
 
     return 0;
