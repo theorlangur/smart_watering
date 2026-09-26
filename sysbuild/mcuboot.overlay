@@ -15,16 +15,7 @@
 		};
 	};
 
-	leds {
-		compatible = "gpio-leds";
-		blue_led: led_1 {
-			gpios = <&gpio2 9 0>;
-			label = "RGB blue channel";
-		};
-	};
-
 	aliases {
-		mcuboot-led0 = &blue_led;
 		mcuboot-button0 = &button0;
 	};
 };
