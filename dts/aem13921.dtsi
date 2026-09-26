@@ -1,0 +1,31 @@
+/ {
+	aem_irqs: aem_irqs {
+		compatible = "gpio-keys";
+		load: load{
+			gpios = <&gpio1 8 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "Load State";
+		};
+		sto: sto{
+			gpios = <&gpio1 9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "Storage State";
+		};
+		i2c_irq: i2c_irq{
+			gpios = <&gpio1 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "I2C IRQ";
+		};
+	};
+};
+
+
+&i2c21 {
+	aem13921: aem13921@51{
+		compatible="epeas,aem13921";
+		reg = <0x51>;
+		status = "okay";
+		//zephyr,deferred-init;
+	};
+};
+
+&gpio1 {
+	status = "okay";
+};

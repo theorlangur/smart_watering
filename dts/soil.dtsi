@@ -1,0 +1,105 @@
+&adc {
+	status = "okay";
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN4>; /* P1.11 */
+		zephyr,resolution = <12>;
+	};
+
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN5>; /* P1.12 */
+		zephyr,resolution = <12>;
+	};
+
+	channel@4 {
+		reg = <4>;
+		zephyr,gain = "ADC_GAIN_1_4";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,input-positive = <NRF_SAADC_AIN6>; /* P1.13 */
+		zephyr,resolution = <12>;
+	};
+};
+
+/ {
+	soil1_vcc: soil1-vcc-regulator {
+		compatible = "regulator-fixed"; // Standard binding for fixed regulators
+		regulator-name = "soil1_vcc_reg";
+		status = "okay";
+
+		/* GPIO controlling the MOSFET gate */
+		/* GPIO_ACTIVE_HIGH means the sensor is ON when GPIO is high */
+		/* Use GPIO_ACTIVE_LOW if your MOSFET logic is inverted */
+		enable-gpios = <&gpio2 7 GPIO_ACTIVE_HIGH>;
+
+		/* Optional: Define the voltage being regulated */
+		// regulator-min-microvolt = ; // e.g., 3.3V
+		// regulator-max-microvolt = ; // e.g., 3.3V
+
+		/* Optional: Delay after enabling GPIO before regulator is considered stable */
+		startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time
+
+		/* Optional: Specify that this regulator should be off initially */
+		//regulator-boot-on; // Remove or comment out if you want it initially OFF
+	};
+
+	soil2_vcc: soil2-vcc-regulator {
+		compatible = "regulator-fixed"; // Standard binding for fixed regulators
+		regulator-name = "soil2_vcc_reg";
+		status = "okay";
+
+		/* GPIO controlling the MOSFET gate */
+		/* GPIO_ACTIVE_HIGH means the sensor is ON when GPIO is high */
+		/* Use GPIO_ACTIVE_LOW if your MOSFET logic is inverted */
+		enable-gpios = <&gpio2 8 GPIO_ACTIVE_HIGH>;
+
+		/* Optional: Define the voltage being regulated */
+		// regulator-min-microvolt = ; // e.g., 3.3V
+		// regulator-max-microvolt = ; // e.g., 3.3V
+
+		/* Optional: Delay after enabling GPIO before regulator is considered stable */
+		startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time
+
+		/* Optional: Specify that this regulator should be off initially */
+		//regulator-boot-on; // Remove or comment out if you want it initially OFF
+	};
+
+	soil3_vcc: soil3-vcc-regulator {
+		compatible = "regulator-fixed"; // Standard binding for fixed regulators
+		regulator-name = "soil3_vcc_reg";
+		status = "okay";
+
+		/* GPIO controlling the MOSFET gate */
+		/* GPIO_ACTIVE_HIGH means the sensor is ON when GPIO is high */
+		/* Use GPIO_ACTIVE_LOW if your MOSFET logic is inverted */
+		enable-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
+
+		/* Optional: Define the voltage being regulated */
+		// regulator-min-microvolt = ; // e.g., 3.3V
+		// regulator-max-microvolt = ; // e.g., 3.3V
+
+		/* Optional: Delay after enabling GPIO before regulator is considered stable */
+		startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time
+
+		/* Optional: Specify that this regulator should be off initially */
+		//regulator-boot-on; // Remove or comment out if you want it initially OFF
+	};
+};
+
+&gpio1 {
+	status = "okay";
+};
+
+&gpio2 {
+	status = "okay";
+};

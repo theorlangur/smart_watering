@@ -1,11 +1,22 @@
 #include "partitions.dtsi"
 #include "zigbee_partitions.dtsi"
 #include "usb_uart.dtsi"
+#include "buttons.dtsi"
+#include "pump.dtsi"
+#include "pressure.dtsi"
+#include "soil.dtsi"
+#include "aem13921.dtsi"
+
 / {
 	chosen {
 		ncs,zigbee-timer = &timer20;
 		zephyr,code-partition = &slot0_partition;
 		zephyr,console = &uart00;
+	};
+
+	zephyr,user {
+		io-channels = <&adc 0>, <&adc 1>, <&adc 2>, <&adc 3>, <&adc 4>;
+		io-channel-names = "pump_current", "pressure", "soil1_out", "soil2_out", "soil3_out";
 	};
 
 	aliases {
@@ -27,17 +38,31 @@
 	status = "okay";
 };
 
-&gpio2 {
-	status = "okay";
+&pinctrl {
+	//i2c sensor bus
+	/omit-if-no-ref/ i2c21_default: i2c21_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 1, 6)>,
+				<NRF_PSEL(TWIM_SCL, 1, 5)>;
+		};
+	};
+
+	/omit-if-no-ref/ i2c21_sleep: i2c21_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 1, 6)>,
+				<NRF_PSEL(TWIM_SCL, 1, 5)>;
+			low-power-enable;
+		};
+	};
 };
 
-&gpio0 {
+&i2c21 {
 	status = "okay";
+	pinctrl-0 = <&i2c21_default>;
+	pinctrl-1 = <&i2c21_sleep>;
+	pinctrl-names = "default", "sleep";
 };
 
-&gpio1 {
-	status = "okay";
-};
 
 &cpuapp_sram {
 	/* Shrink SRAM size to avoid overlap with retained memory region */

@@ -1,18 +1,10 @@
 #include "../dts/partitions.dtsi"
 #include "../dts/usb_uart.dtsi"
+#include "../dts/buttons.dtsi"
 / {
 	chosen {
 		zephyr,code-partition = &boot_partition;
 		zephyr,uart-mcumgr = &uart00;
-	};
-
-	buttons {
-		compatible = "gpio-keys";
-
-		button0: button_0 {
-			gpios = <&gpio0 0 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
-			label = "Button 1";
-		};
 	};
 
 	aliases {
@@ -20,10 +12,4 @@
 	};
 };
 
-&gpio2 {
-	status = "okay";
-};
 
-&gpio0 {
-	status = "okay";
-};
