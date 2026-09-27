@@ -32,9 +32,22 @@
 			status = "okay";
 		};
 	};
+
+
+	usb_sense: usb_sense {
+		compatible = "gpio-keys";
+		sense: sense{
+			gpios = <&gpio0 3 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "USB Sense";
+		};
+	};
 };
 
 &timer20 {
+	status = "okay";
+};
+
+&gpio0 {
 	status = "okay";
 };
 
