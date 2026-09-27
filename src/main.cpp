@@ -19,6 +19,7 @@
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/storage/flash_map.h>
+#include "usb_uart.hpp"
 #include "threads_snapshot.hpp"
 #include "partition_basic.hpp"
 /**********************************************************************/
@@ -224,6 +225,8 @@ int main(void)
 {
     //static_assert(atomic_state_t::is_always_lock_free);
     //disable_hw_wdt();
+
+    //usb_uart::setup();
 
     int err = settings_subsys_init();
 

@@ -10,7 +10,12 @@ project(smartwater)
 
 target_include_directories(app PRIVATE submodules/esp_generic_lib/include)
 
-target_sources(app PRIVATE src/main.cpp)
+set(SRCS 
+    src/main.cpp
+    src/usb_uart.cpp
+)
+
+target_sources(app PRIVATE ${SRCS})
 
 add_subdirectory(submodules/nrf_general)
 add_subdirectory(submodules/nrf_uart)
