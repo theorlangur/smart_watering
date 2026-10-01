@@ -66,15 +66,20 @@ namespace usb_uart
 	    LOG_ERR("USB sense GPIO not ready");
 	    return -ENODEV;
 	}
+
+	int err;
 	k_work_init(&usb_sense_work, usb_sense_work_handler);
 
-	gpio_pin_configure_dt(&usb_sense, GPIO_INPUT);
-	gpio_pin_interrupt_configure_dt(&usb_sense, GPIO_INT_EDGE_BOTH);
+	err = gpio_pin_configure_dt(&usb_sense, GPIO_INPUT);
+	if (err < 0) return err;
+	err = gpio_pin_interrupt_configure_dt(&usb_sense, GPIO_INT_EDGE_BOTH | GPIO_INT_LEVELS_LOGICAL);
+	if (err < 0) return err;
 	gpio_init_callback(&sense_cb_data, usb_sense_isr, BIT(usb_sense.pin));
-	gpio_add_callback(usb_sense.port, &sense_cb_data);
+	err = gpio_add_callback(usb_sense.port, &sense_cb_data);
+	if (err < 0) return err;
 
-	k_work_submit(&usb_sense_work);
-	return 0;
+	err = k_work_submit(&usb_sense_work);
+	return err;
     }
 
     bool usb_state()
