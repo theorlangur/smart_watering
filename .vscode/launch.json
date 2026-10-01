@@ -6,37 +6,37 @@
     "version": "0.2.0",
     "configurations": [
         {
-          "name": "Cortex-Debug Attach GCC",
-          "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
-          "request": "attach",
-          "type": "cortex-debug",
-          "servertype": "jlink",
-          "interface": "swd",
-          "device": "cortex-m33",
-          "rtos": "Zephyr",
-          "preRestartCommands": [
-            "enable breakpoint"
-          ]
+            "name": "Cortex-Debug Attach GCC",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "interface": "swd",
+            "device": "cortex-m33",
+            "rtos": "Zephyr",
+            "preRestartCommands": [
+                "enable breakpoint"
+            ]
         },
         {
-          "name": "Cortex-Debug Start GCC",
-          "cwd": "${workspaceRoot}",
-          "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
-          "request": "launch",
-          "type": "cortex-debug",
-          "servertype": "jlink",
-          "interface": "swd",
-          "device": "cortex-m33",
-          "rtos": "Zephyr",
-          "runToEntryPoint": "",
-          // "preRestartCommands": [
-          //   "enable breakpoint"
-          // ],
-          "postResetCommands": [
-            "stepi"
-          ],
-          "showDevDebugOutput": "none"
+            "name": "Cortex-Debug Start GCC",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build_ezurio_gcc16_human/watering/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "interface": "swd",
+            "device": "cortex-m33",
+            "rtos": "Zephyr",
+            "runToEntryPoint": "",
+            // "preRestartCommands": [
+            //   "enable breakpoint"
+            // ],
+            "postResetCommands": [
+                "stepi"
+            ],
+            "showDevDebugOutput": "none"
         },
         {
             "name": "CoreDump",
@@ -76,11 +76,6 @@
             "stopAtConnect": true,
             "stopAtEntry": true,
             "MIMode": "gdb"
-        },
-        {
-            "name": "Launch NRF",
-            "type": "nrf-debug",
-            "request": "launch"
         }
     ]
 }
