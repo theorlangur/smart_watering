@@ -1,0 +1,14 @@
+description: Soil moisture ADC sensor group
+compatible: "vnd,soil-sensors"
+
+include: [base.yaml]
+
+properties:
+  io-channels:
+    type: phandle-array
+    required: true
+    description: ADC channels connected to soil sensors
+  power-regs:
+    type: phandles
+    required: true
+    description: Power regulators on soil sensors
