@@ -22,6 +22,7 @@
 #include "usb_uart.hpp"
 #include "threads_snapshot.hpp"
 #include "partition_basic.hpp"
+#include "soil_task.hpp"
 /**********************************************************************/
 /* Zigbee                                                             */
 /**********************************************************************/
@@ -227,6 +228,7 @@ int main(void)
     //disable_hw_wdt();
 
     //usb_uart::setup();
+    soil::setup_task();
 
     int err = settings_subsys_init();
 
