@@ -4,6 +4,9 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/sensor.h>
 #include <nrf_general/lib_msgq_typed.hpp>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(soil, LOG_LEVEL_INF);
 
 namespace soil
 {
@@ -25,12 +28,21 @@ namespace soil
     uint32_t setup_task()
     {
 	uint32_t res = 0;
+	int ready = 0;
 	for(size_t i = 0; i < kSoilCount; ++i)
 	{
 	    if (device_is_ready(soil_sensors[i]))
+	    {
 		res |= uint32_t(1) << i;
+		++ready;
+	    }
+	    else
+	    {
+		LOG_WRN("Soil sensor %d not ready", i);
+	    }
 	}
 
+	LOG_INF("(setup) Total soil sensors declared: %d; Ready: %d", (int)kSoilCount, ready);
 	return res;
     }
 
@@ -72,6 +84,7 @@ namespace soil
 			if (err < 0)
 			{
 			    results[i] = std::unexpected(err);
+			    LOG_ERR("(request) Soil sensor %d: failed fetching sample with err %d (%s)", (int)i, err, strerror(err));
 			}else
 			{
 			    sensor_value v;
@@ -79,15 +92,18 @@ namespace soil
 			    if (err < 0)
 			    {
 				results[i] = std::unexpected(err);
+				LOG_ERR("(request) Soil sensor %d: failed getting channels value with err %d (%s)", (int)i, err, strerror(err));
 			    }else
 			    {
 				float soil_humidity = v.val1 + float(v.val2) / 1'000'000.f;
 				results[i] = soil_humidity;
+				LOG_INF("(request) Soil sensor %d: measured %.2f %% humidity", (int)i, (double)soil_humidity);
 			    }
 			}
 		    }else
 		    {
 			results[i] = std::unexpected(-ENODEV);
+			LOG_WRN("(request) Soil sensor %d not ready", (int)i);
 		    }
 		}
 	    }
