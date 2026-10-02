@@ -6,33 +6,23 @@
 
 namespace soil
 {
-#define SOIL_NODE DT_PATH(soil_sensors)
-#define DT_SPEC_AND_COMMA(node_id, prop, idx) \
-    ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
+#define SOIL_PARENT_NODE DT_NODELABEL(soil_sensors)
 
-    constinit static const ::adc_dt_spec soil_sensors_adc[] = {
-	DT_FOREACH_PROP_ELEM(SOIL_NODE, io_channels,
-		DT_SPEC_AND_COMMA)
+    /* Callback macro invoked for every child node */
+#define SOIL_DEVICE_ENTRY(child_node_id) DEVICE_DT_GET(child_node_id),
+
+    /* Compile-time array of pointers to the sensor devices */
+    constinit static const device *const soil_sensors[] = {
+	DT_FOREACH_CHILD_STATUS_OKAY(SOIL_PARENT_NODE, SOIL_DEVICE_ENTRY)
     };
 
-#define SOIL_POWER_DEVICE_GET(node_id, prop, idx) \
-    DEVICE_DT_GET(DT_PROP_BY_IDX(node_id, prop, idx)),
-
-    /* Compile-time generated array of regulator device pointers */
-    constinit static const struct device *const soil_powers[] = {
-	DT_FOREACH_PROP_ELEM(SOIL_NODE, power_regs, SOIL_POWER_DEVICE_GET)
-    };
-
-    static_assert(std::size(soil_sensors_adc) == std::size(soil_powers));
-    constexpr auto kSoilCount = std::size(soil_sensors_adc);
-
-    constinit static Sensor soilSensors[kSoilCount]{};
+    constexpr auto kSoilCount = std::size(soil_sensors);
 
     int setup_task()
     {
 	for(size_t i = 0; i < kSoilCount; ++i)
 	{
-	    soilSensors[i].setup(soil_powers[i], &soil_sensors_adc[i]);
+	    device_is_ready(soil_sensors[i]);
 	}
 	return -ENOTSUP;
     }

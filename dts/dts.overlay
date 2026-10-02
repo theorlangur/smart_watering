@@ -14,12 +14,6 @@
 		zephyr,console = &uart00;
 	};
 
-	soil_sensors: soil-sensors {
-		compatible = "vnd,soil-sensors";
-		io-channels = <&adc 2>, <&adc 3>, <&adc 4>;
-		power-regs = <&soil1_vcc>, <&soil2_vcc>, <&soil3_vcc>;
-	};
-
 	zephyr,user {
 		io-channels = <&adc 0>, <&adc 1>;
 		io-channel-names = "pump_current", "pressure";
