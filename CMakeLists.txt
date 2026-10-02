@@ -13,7 +13,6 @@ target_include_directories(app PRIVATE submodules/esp_generic_lib/include)
 set(SRCS 
     src/main.cpp
     src/usb_uart.cpp
-    src/soil_sensor.cpp
     src/soil_task.cpp
 )
 
