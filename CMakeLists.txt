@@ -14,6 +14,7 @@ set(SRCS
     src/main.cpp
     src/usb_uart.cpp
     src/soil_task.cpp
+    src/zigbee.cpp
 )
 
 target_sources(app PRIVATE ${SRCS})
