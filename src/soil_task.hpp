@@ -12,7 +12,7 @@ namespace soil
     {
         uint32_t soil_sensors_mask = 0xffffffff;
         cb_t callback = nullptr;
-        void *user;
+        void *user = nullptr;
     };
 
     uint32_t setup_task();

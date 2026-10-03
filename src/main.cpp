@@ -25,6 +25,10 @@
 #include "soil_task.hpp"
 #include "zigbee.hpp"
 
+
+#include <zephyr/logging/log.h>
+#include <zephyr/drivers/sensor/aem13921.h>
+
 #include <atomic>
 
 //extern "C"{
@@ -56,6 +60,43 @@ constexpr bool kDebug = false;
 //#define DEVICE_ERASE_BLOCK_SIZE 1
 //#endif
 
+LOG_MODULE_REGISTER(main_log, LOG_LEVEL_INF);
+
+
+/**********************************************************************/
+/* For testing purposes                                               */
+/**********************************************************************/
+
+static const struct gpio_dt_spec btn0 = GPIO_DT_SPEC_GET(DT_NODELABEL(button0), gpios);
+static const struct gpio_dt_spec btn1 = GPIO_DT_SPEC_GET(DT_NODELABEL(button1), gpios);
+static const struct gpio_dt_spec btn2 = GPIO_DT_SPEC_GET(DT_NODELABEL(button2), gpios);
+
+static struct gpio_callback btn0_cb_data;
+static struct k_work test_measure_soil_work;
+
+void measure_soil_handler(soil::soil_result_t *pResults, size_t count, uint32_t mask, void *pUserArg)
+{
+    for(size_t i = 0; i < count; ++i)
+    {
+	if (mask & (1 << i))
+	{
+	    auto &r = pResults[i];
+	    if (r)
+	    {
+		LOG_INF("soil%d: %.2f%%", (int)i, double(*r));
+	    }else
+	    {
+		LOG_INF("soil%d: %d (%s)", (int)i, r.error(), strerror(r.error()));
+	    }
+	}
+    }
+}
+
+static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+    /* Defer PM state change out of interrupt context */
+    soil::run_measurements({.soil_sensors_mask = 0, .callback = measure_soil_handler});
+}
 
 int main(void)
 {
@@ -63,10 +104,22 @@ int main(void)
     //disable_hw_wdt();
 
     //usb_uart::setup();
+    LOG_INF("aem13921 test: %d", aem13921_hello());
     soil::setup_task();
     zb::setup();
 
     int err = settings_subsys_init();
+
+    err = gpio_pin_configure_dt(&btn0, GPIO_INPUT);
+    if (err < 0) 
+	LOG_INF("btn0 cfg: %d (%s)", err, strerror(err));
+    err = gpio_pin_interrupt_configure_dt(&btn0, GPIO_INT_LEVEL_INACTIVE);
+    if (err < 0)
+	LOG_INF("btn0 int cfg: %d (%s)", err, strerror(err));
+    gpio_init_callback(&btn0_cb_data, btn0_isr, BIT(btn0.pin));
+    err = gpio_add_callback(btn0.port, &btn0_cb_data);
+    if (err < 0)
+	LOG_INF("btn0 cb: %d (%s)", err, strerror(err));
 
     printk("main\r\n");
 

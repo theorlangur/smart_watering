@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.20.0)
 
 set(EXTRA_DTC_OVERLAY_FILE "dts/dts.overlay")
 set(TOOLCHAIN_HAS_PICOLIBC ON CACHE BOOL "Force toolchain picolibc support" FORCE)
+list(APPEND ZEPHYR_EXTRA_MODULES "/home/theorlangur/myapps/cpp/nrf/libs/aem13921")
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(smartwater)
