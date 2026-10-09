@@ -9,6 +9,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/settings/settings.h>
 //#include <dk_buttons_and_leds.h>
 //#include <nrf_general/led.h>
@@ -27,7 +28,7 @@
 
 
 #include <zephyr/logging/log.h>
-#include <zephyr/drivers/sensor/aem13921.h>
+#include <zephyr/drivers/sensor/aem13921.hpp>
 
 #include <atomic>
 
@@ -98,17 +99,36 @@ static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_
     soil::run_measurements({.soil_sensors_mask = 0, .callback = measure_soil_handler});
 }
 
+static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
+
 int main(void)
 {
     //static_assert(atomic_state_t::is_always_lock_free);
     //disable_hw_wdt();
 
     //usb_uart::setup();
-    LOG_INF("aem13921 test: %d", aem13921_hello());
+    //LOG_INF("aem13921 test: %d", aem13921_hello());
     soil::setup_task();
     zb::setup();
 
     int err = settings_subsys_init();
+    uint8_t v;
+    err = epeas::aem1392x_get_version(aem13921_dev, &v);
+    LOG_INF("aem13921 test: %d, %d", err, v);
+
+    epeas::aem1392x_configure_src_regulation_mppt(aem13921_dev, epeas::src_t::_0, {.ratio = epeas::mppt_ratio_t::_75, .wait = epeas::mppt_wait_t::_116, .period = epeas::mppt_period_t::_14895});
+    epeas::aem1392x_configure_src_regulation_voltage(aem13921_dev, epeas::src_t::_1, 0.5);
+    auto res = epeas::aem1392x_get_src_regulation(aem13921_dev, epeas::src_t::_1);
+    if (res)
+    {
+	auto const& v = *res;
+	//auto *pmppt = std::get_if<epeas::src_mppt_cfg_t>(&v);
+	//v.visit();
+    }else
+    {
+	LOG_INF("aem13921 test@: %d", res.error());
+    }
+
 
     err = gpio_pin_configure_dt(&btn0, GPIO_INPUT);
     if (err < 0) 
