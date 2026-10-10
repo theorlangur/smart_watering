@@ -242,7 +242,7 @@ void dbg_aem13921()
 	}
     }
     {
-	auto src1_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_0);
+	auto src1_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_1);
 	if (src1_v)
 	{
 	    LOG_INF("src1 v: %.3f", *src1_v);
@@ -253,7 +253,7 @@ void dbg_aem13921()
 	}
     }
     {
-	auto src2_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_1);
+	auto src2_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_2);
 	if (src2_v)
 	{
 	    LOG_INF("src2 v: %.3f", *src2_v);
@@ -281,8 +281,8 @@ int main(void)
     err = epeas::aem1392x_get_version(aem13921_dev, &v);
     LOG_INF("aem13921 test: %d, %d", err, v);
 
-    epeas::aem1392x_configure_src_regulation_mppt(aem13921_dev, epeas::src_t::_0, {.ratio = epeas::mppt_ratio_t::_75, .wait = epeas::mppt_wait_t::_116, .period = epeas::mppt_period_t::_14895});
-    epeas::aem1392x_configure_src_regulation_voltage(aem13921_dev, epeas::src_t::_1, 0.5);
+    //epeas::aem1392x_configure_src_regulation_mppt(aem13921_dev, epeas::src_t::_0, {.ratio = epeas::mppt_ratio_t::_75, .wait = epeas::mppt_wait_t::_116, .period = epeas::mppt_period_t::_14895});
+    //epeas::aem1392x_configure_src_regulation_voltage(aem13921_dev, epeas::src_t::_1, 0.5);
     auto res = epeas::aem1392x_get_src_regulation(aem13921_dev, epeas::src_t::_1);
     if (res)
     {
