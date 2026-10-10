@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "lib_misc_helpers.hpp"
 #define FORCE_FMT
 #define PRINTF_FUNC(...) printk(__VA_ARGS__)
 
@@ -101,6 +102,170 @@ static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_
 
 static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
 
+void dbg_aem13921()
+{
+    LOG_INF("<================AEM13921=================>");
+    {
+	auto irq = epeas::aem1392x_get_irq_state(aem13921_dev);
+	if (irq)
+	{
+	    LOG_INF("irq: 0x%X 0x%X", (*irq).bytes[0], (*irq).bytes[1]);
+	}else
+	{
+	    LOG_ERR("irq: failed with %d %s", irq.error(), strerror(irq.error()));
+	}
+    }
+    {
+	auto status = epeas::aem1392x_get_status(aem13921_dev);
+	if (status)
+	{
+	    LOG_INF("status: 0x%X 0x%X", (*status).bytes[0], (*status).bytes[1]);
+	}else
+	{
+	    LOG_ERR("status: failed with %d %s", status.error(), strerror(status.error()));
+	}
+    }
+
+    {
+	auto apm_err = epeas::aem1392x_get_apm_error(aem13921_dev);
+	if (apm_err)
+	{
+	    LOG_INF("apm error: 0x%X", apm_err->byte);
+	}
+	else
+	{
+	    LOG_ERR("apm error: failed with %d %s", apm_err.error(), strerror(apm_err.error()));
+	}
+    }
+
+    {
+	auto apm_5v = epeas::aem1392x_get_apm_ch5v(aem13921_dev);
+	if (apm_5v)
+	{
+	    LOG_INF("apm 5v: %d", apm_5v->value);
+	}
+	else
+	{
+	    LOG_ERR("apm 5v: failed with %d %s", apm_5v.error(), strerror(apm_5v.error()));
+	}
+    }
+    {
+	auto apm_src1 = epeas::aem1392x_get_apm_src1(aem13921_dev);
+	if (apm_src1)
+	{
+	    std::visit(
+		overloaded{
+		    [](const epeas::apm_counter_no_acc_t &v)
+		    {
+			LOG_INF("apm src1 cnt no acc: %d", v.value.counter);
+		    },
+		    [](const epeas::apm_counter_acc_t &v)
+		    {
+			LOG_INF("apm src1 cnt acc: %d:%d", v.value.offset, v.value.counter);
+		    },
+		    [](const epeas::apm_power_meter_acc_t &v)
+		    {
+			LOG_INF("apm src1 power: %d:%d", v.value.offset, v.value.power);
+		    }
+		},
+		*apm_src1
+	    );
+	}
+	else
+	{
+	    LOG_ERR("apm src1: failed with %d %s", apm_src1.error(), strerror(apm_src1.error()));
+	}
+    }
+    {
+	auto apm_src2 = epeas::aem1392x_get_apm_src2(aem13921_dev);
+	if (apm_src2)
+	{
+	    std::visit(
+		overloaded{
+		    [](const epeas::apm_counter_no_acc_t &v)
+		    {
+			LOG_INF("apm src2 cnt no acc: %d", v.value.counter);
+		    },
+		    [](const epeas::apm_counter_acc_t &v)
+		    {
+			LOG_INF("apm src2 cnt acc: %d:%d", v.value.offset, v.value.counter);
+		    },
+		    [](const epeas::apm_power_meter_acc_t &v)
+		    {
+			LOG_INF("apm src2 power: %d:%d", v.value.offset, v.value.power);
+		    }
+		},
+		*apm_src2
+	    );
+	}
+	else
+	{
+	    LOG_ERR("apm src2: failed with %d %s", apm_src2.error(), strerror(apm_src2.error()));
+	}
+    }
+    {
+	auto apm_load = epeas::aem1392x_get_apm_load(aem13921_dev);
+	if (apm_load)
+	{
+	    std::visit(
+		overloaded{
+		    [](const epeas::apm_counter_no_acc_t &v)
+		    {
+			LOG_INF("apm load cnt no acc: %d", v.value.counter);
+		    },
+		    [](const epeas::apm_counter_acc_t &v)
+		    {
+			LOG_INF("apm load cnt acc: %d:%d", v.value.offset, v.value.counter);
+		    },
+		    [](const epeas::apm_power_meter_acc_t &v)
+		    {
+			LOG_INF("apm load power: %d:%d", v.value.offset, v.value.power);
+		    }
+		},
+		*apm_load
+	    );
+	}
+	else
+	{
+	    LOG_ERR("apm load: failed with %d %s", apm_load.error(), strerror(apm_load.error()));
+	}
+    }
+    {
+	auto storage_v = epeas::aem1392x_get_storage_voltage(aem13921_dev);
+	if (storage_v)
+	{
+	    LOG_INF("storage v: %.3f", *storage_v);
+	}
+	else
+	{
+	    LOG_ERR("storage v: failed with %d %s", storage_v.error(), strerror(storage_v.error()));
+	}
+    }
+    {
+	auto src1_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_0);
+	if (src1_v)
+	{
+	    LOG_INF("src1 v: %.3f", *src1_v);
+	}
+	else
+	{
+	    LOG_ERR("src1 v: failed with %d %s", src1_v.error(), strerror(src1_v.error()));
+	}
+    }
+    {
+	auto src2_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_1);
+	if (src2_v)
+	{
+	    LOG_INF("src2 v: %.3f", *src2_v);
+	}
+	else
+	{
+	    LOG_ERR("src2 v: failed with %d %s", src2_v.error(), strerror(src2_v.error()));
+	}
+    }
+    LOG_INF("<================AEM13921=================>");
+}
+
 int main(void)
 {
     //static_assert(atomic_state_t::is_always_lock_free);
@@ -144,7 +309,7 @@ int main(void)
     printk("main\r\n");
 
     while (1) {
-	printk("Main: sleep forever\r\n");
+	dbg_aem13921();
 	k_msleep(1000);
     }
 
