@@ -25,6 +25,7 @@
 #include "threads_snapshot.hpp"
 #include "partition_basic.hpp"
 #include "soil_task.hpp"
+#include "pump_task.hpp"
 #include "zigbee.hpp"
 
 
@@ -97,7 +98,8 @@ void measure_soil_handler(soil::soil_result_t *pResults, size_t count, uint32_t 
 static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     /* Defer PM state change out of interrupt context */
-    soil::run_measurements({.soil_sensors_mask = 0, .callback = measure_soil_handler});
+    soil::run_measurements({.soil_sensors_mask = 1, .callback = measure_soil_handler});
+    pump::command(pump::start_t{.duration = 3000}, nullptr, nullptr);
 }
 
 static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
