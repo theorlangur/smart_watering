@@ -102,6 +102,32 @@ static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_
 
 static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
 
+size_t dbg_dump_aem13921_status(epeas::status_t s, char *buf, size_t sz)
+{
+    size_t used_len = 0;
+    char *p = buf;
+    auto add_flag = [&](bool f, std::string_view v)
+    {
+	if (f && (used_len + v.size() + 1) <= sz)
+	{
+	    strcpy(p, v.data());
+	    p += v.size();
+	    used_len += v.size();
+	}
+    };
+    add_flag(s.bits.ovdischarge, "ovdis; ");
+    add_flag(s.bits.charge_ready, "chrdy; ");
+    add_flag(s.bits.overcharge, "ovch; ");
+    add_flag(s.bits.src1_low, "s1low; ");
+    add_flag(s.bits.src2_low, "s2low; ");
+    add_flag(s.bits.charger_5v_connected, "ch5v; ");
+    add_flag(s.bits.temp_cold_charge, "t_cold_ch; ");
+    add_flag(s.bits.temp_hot_charge, "t_hot_ch; ");
+    add_flag(s.bits.temp_cold_dis, "t_cold_dis; ");
+    add_flag(s.bits.temp_hot_discharge, "t_hot_dis; ");
+    return used_len;
+}
+
 void dbg_aem13921()
 {
     LOG_INF("<================AEM13921=================>");
@@ -119,7 +145,9 @@ void dbg_aem13921()
 	auto status = epeas::aem1392x_get_status(aem13921_dev);
 	if (status)
 	{
-	    LOG_INF("status: 0x%X 0x%X", (*status).bytes[0], (*status).bytes[1]);
+	    char buf[128]={0};
+	    dbg_dump_aem13921_status(*status, buf, sizeof(buf));
+	    LOG_INF("status: 0x%X 0x%X; %s", (*status).bytes[0], (*status).bytes[1], buf);
 	}else
 	{
 	    LOG_ERR("status: failed with %d %s", status.error(), strerror(status.error()));
@@ -298,7 +326,7 @@ int main(void)
     err = gpio_pin_configure_dt(&btn0, GPIO_INPUT);
     if (err < 0) 
 	LOG_INF("btn0 cfg: %d (%s)", err, strerror(err));
-    err = gpio_pin_interrupt_configure_dt(&btn0, GPIO_INT_LEVEL_INACTIVE);
+    err = gpio_pin_interrupt_configure_dt(&btn0, GPIO_INT_EDGE_TO_INACTIVE);
     if (err < 0)
 	LOG_INF("btn0 int cfg: %d (%s)", err, strerror(err));
     gpio_init_callback(&btn0_cb_data, btn0_isr, BIT(btn0.pin));
