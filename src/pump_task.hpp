@@ -9,6 +9,7 @@ namespace pump
     struct start_t
     {
         uint32_t duration = 1000;
+        float power_percentage = 100.f;//0..100%
     };
     struct extend_duration_t
     {

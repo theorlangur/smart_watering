@@ -14,26 +14,26 @@
 };
 
 / {
-	pump_pwm_ctrl: pump-pwm-regulator {
-		compatible = "regulator-fixed"; // Standard binding for fixed regulators
-		regulator-name = "pump_pwm_reg";
-		status = "okay";
-
-		/* GPIO controlling the MOSFET gate */
-		/* GPIO_ACTIVE_HIGH means the sensor is ON when GPIO is high */
-		/* Use GPIO_ACTIVE_LOW if your MOSFET logic is inverted */
-		enable-gpios = <&gpio2 3 GPIO_ACTIVE_HIGH>;
-
-		/* Optional: Define the voltage being regulated */
-		// regulator-min-microvolt = ; // e.g., 3.3V
-		// regulator-max-microvolt = ; // e.g., 3.3V
-
-		/* Optional: Delay after enabling GPIO before regulator is considered stable */
-		startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time
-
-		/* Optional: Specify that this regulator should be off initially */
-		//regulator-boot-on; // Remove or comment out if you want it initially OFF
-	};
+	/* pump_pwm_ctrl: pump-pwm-regulator { */
+	/* 	compatible = "regulator-fixed"; // Standard binding for fixed regulators */
+	/* 	regulator-name = "pump_pwm_reg"; */
+	/* 	status = "okay"; */
+	/**/
+	    /* GPIO controlling the MOSFET gate */
+	    /* GPIO_ACTIVE_HIGH means the sensor is ON when GPIO is high */
+	    /* Use GPIO_ACTIVE_LOW if your MOSFET logic is inverted */
+	/* 	enable-gpios = <&gpio2 3 GPIO_ACTIVE_LOW>; */
+	/**/
+	    /* Optional: Define the voltage being regulated */
+	/* 	// regulator-min-microvolt = ; // e.g., 3.3V */
+	/* 	// regulator-max-microvolt = ; // e.g., 3.3V */
+	/**/
+	    /* Optional: Delay after enabling GPIO before regulator is considered stable */
+	/* 	startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time */
+	/**/
+	    /* Optional: Specify that this regulator should be off initially */
+	    /* regulator-boot-on; // Remove or comment out if you want it initially OFF */
+	/* }; */
 
 	pump_power_ctrl: pump-power-regulator {
 		compatible = "regulator-fixed"; // Standard binding for fixed regulators
@@ -50,7 +50,7 @@
 		// regulator-max-microvolt = ; // e.g., 3.3V
 
 		/* Optional: Delay after enabling GPIO before regulator is considered stable */
-		startup-delay-us = <100>; // 1us, adjust based on MOSFET and sensor VCC rise time
+		startup-delay-us = <100000>; // 1us, adjust based on MOSFET and sensor VCC rise time
 
 		/* Optional: Specify that this regulator should be off initially */
 		//regulator-boot-on; // Remove or comment out if you want it initially OFF
