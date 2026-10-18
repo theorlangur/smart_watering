@@ -1,4 +1,5 @@
 #include "soil_task.hpp"
+#include <zephyr/pm/device.h>
 
 #include <iterator>
 #include <zephyr/drivers/adc.h>
@@ -25,27 +26,6 @@ namespace soil
     using Queue = msgq::Queue<request_t,4>;
     K_MSGQ_DEFINE_TYPED(Queue, q);
 
-    uint32_t setup_task()
-    {
-	uint32_t res = 0;
-	int ready = 0;
-	for(size_t i = 0; i < kSoilCount; ++i)
-	{
-	    if (device_is_ready(soil_sensors[i]))
-	    {
-		res |= uint32_t(1) << i;
-		++ready;
-	    }
-	    else
-	    {
-		LOG_WRN("Soil sensor %d not ready", i);
-	    }
-	}
-
-	LOG_INF("(setup) Total soil sensors declared: %d; Ready: %d", (int)kSoilCount, ready);
-	return res;
-    }
-
     size_t sensors_count()
     {
 	return kSoilCount;
@@ -59,7 +39,7 @@ namespace soil
 
     void measurements_thread(void *, void *, void *);
 
-    constexpr size_t SOIL_SENSE_THREAD_STACK_SIZE = 1024;
+    constexpr size_t SOIL_SENSE_THREAD_STACK_SIZE = 4*1024;
     constexpr size_t SOIL_SENSE_THREAD_PRIORITY=7;
 
     K_THREAD_DEFINE(soil_sense_thread, SOIL_SENSE_THREAD_STACK_SIZE,
@@ -78,6 +58,7 @@ namespace soil
 		if (r.soil_sensors_mask & (uint32_t(1) << i))
 		{
 		    auto *pDev = soil_sensors[i];
+		    pm_device_action_run(pDev, PM_DEVICE_ACTION_RESUME);
 		    if (device_is_ready(pDev))
 		    {
 			int err = sensor_sample_fetch(pDev);
@@ -105,6 +86,7 @@ namespace soil
 			results[i] = std::unexpected(-ENODEV);
 			LOG_WRN("(request) Soil sensor %d not ready", (int)i);
 		    }
+		    pm_device_action_run(pDev, PM_DEVICE_ACTION_SUSPEND);
 		}
 	    }
 	    if (r.callback)
@@ -112,5 +94,28 @@ namespace soil
 		r.callback(results, kSoilCount, r.soil_sensors_mask, r.user);
 	    }
 	}
+    }
+
+    uint32_t setup_task()
+    {
+	uint32_t res = 0;
+	int ready = 0;
+	for(size_t i = 0; i < kSoilCount; ++i)
+	{
+	    if (device_is_ready(soil_sensors[i]))
+	    {
+		res |= uint32_t(1) << i;
+		++ready;
+		pm_device_action_run(soil_sensors[i], PM_DEVICE_ACTION_SUSPEND);
+	    }
+	    else
+	    {
+		LOG_WRN("Soil sensor %d not ready", i);
+	    }
+	}
+
+	LOG_INF("(setup) Total soil sensors declared: %d; Ready: %d", (int)kSoilCount, ready);
+	k_thread_start(soil_sense_thread);
+	return res;
     }
 }

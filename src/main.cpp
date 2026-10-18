@@ -6,6 +6,7 @@
 
 #include "lib_misc_helpers.hpp"
 #define FORCE_FMT
+#undef PRINTF_FUNC
 #define PRINTF_FUNC(...) printk(__VA_ARGS__)
 
 #include <zephyr/kernel.h>
@@ -45,24 +46,6 @@ constexpr bool kDebug = false;
 #define BREADCRUMBS_PARTITION		breadcrumbs_partition
 #define BREADCRUMBS_PARTITION_ID	FIXED_PARTITION_ID(BREADCRUMBS_PARTITION)
 
-//#if !FIXED_PARTITION_EXISTS(BREADCRUMBS_PARTITION)
-//#error "Need a fixed partition named 'breadcrumbs-partition'!"
-//#endif
-//
-///* Note that currently external memories are not supported */
-//#define FLASH_CONTROLLER	\
-//	DT_PARENT(DT_PARENT(DT_NODELABEL(BREADCRUMBS_PARTITION)))
-//
-//#define FLASH_WRITE_SIZE	DT_PROP(FLASH_CONTROLLER, write_block_size)
-//#define FLASH_BUF_SIZE \
-//	MAX(FLASH_WRITE_SIZE, ROUND_UP(CONFIG_DEBUG_COREDUMP_FLASH_CHUNK_SIZE, FLASH_WRITE_SIZE))
-//#if DT_NODE_HAS_PROP(FLASH_CONTROLLER, erase_block_size)
-//#define DEVICE_ERASE_BLOCK_SIZE DT_PROP(FLASH_CONTROLLER, erase_block_size)
-//#else
-///* Device has no erase block size */
-//#define DEVICE_ERASE_BLOCK_SIZE 1
-//#endif
-
 LOG_MODULE_REGISTER(main_log, LOG_LEVEL_INF);
 
 
@@ -74,7 +57,10 @@ static const struct gpio_dt_spec btn0 = GPIO_DT_SPEC_GET(DT_NODELABEL(button0), 
 static const struct gpio_dt_spec btn1 = GPIO_DT_SPEC_GET(DT_NODELABEL(button1), gpios);
 static const struct gpio_dt_spec btn2 = GPIO_DT_SPEC_GET(DT_NODELABEL(button2), gpios);
 
+static const struct gpio_dt_spec aem13921_irq = GPIO_DT_SPEC_GET(DT_NODELABEL(i2c_irq), gpios);
+
 static struct gpio_callback btn0_cb_data;
+static struct gpio_callback aem_cb_data;
 static struct k_work test_measure_soil_work;
 
 void measure_soil_handler(soil::soil_result_t *pResults, size_t count, uint32_t mask, void *pUserArg)
@@ -95,11 +81,20 @@ void measure_soil_handler(soil::soil_result_t *pResults, size_t count, uint32_t 
     }
 }
 
+bool dump_aem_info = false;
+static struct k_work btn0_work;
+static void btn0_work_handler(struct k_work *work)
+{
+    LOG_INF("button press registered");
+    dump_aem_info = true;
+}
+
 static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     /* Defer PM state change out of interrupt context */
-    soil::run_measurements({.soil_sensors_mask = 1, .callback = measure_soil_handler});
-    pump::command(pump::start_t{.duration = 3000}, nullptr, nullptr);
+    soil::run_measurements({.soil_sensors_mask = 0b0111, .callback = measure_soil_handler});
+    //pump::command(pump::start_t{.duration = 10000, .power_percentage = 80}, nullptr, nullptr);
+    k_work_submit(&btn0_work);
 }
 
 static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
@@ -133,16 +128,16 @@ size_t dbg_dump_aem13921_status(epeas::status_t s, char *buf, size_t sz)
 void dbg_aem13921()
 {
     LOG_INF("<================AEM13921=================>");
-    {
-	auto irq = epeas::aem1392x_get_irq_state(aem13921_dev);
-	if (irq)
-	{
-	    LOG_INF("irq: 0x%X 0x%X", (*irq).bytes[0], (*irq).bytes[1]);
-	}else
-	{
-	    LOG_ERR("irq: failed with %d %s", irq.error(), strerror(irq.error()));
-	}
-    }
+	//   {
+	//auto irq = epeas::aem1392x_get_irq_state(aem13921_dev);
+	//if (irq)
+	//{
+	//    LOG_INF("irq: 0x%X 0x%X", (*irq).bytes[0], (*irq).bytes[1]);
+	//}else
+	//{
+	//    LOG_ERR("irq: failed with %d %s", irq.error(), strerror(irq.error()));
+	//}
+	//   }
     {
 	auto status = epeas::aem1392x_get_status(aem13921_dev);
 	if (status)
@@ -264,7 +259,7 @@ void dbg_aem13921()
 	auto storage_v = epeas::aem1392x_get_storage_voltage(aem13921_dev);
 	if (storage_v)
 	{
-	    LOG_INF("storage v: %.3f", *storage_v);
+	    LOG_INF("storage v: %.3f", (double)*storage_v);
 	}
 	else
 	{
@@ -275,7 +270,7 @@ void dbg_aem13921()
 	auto src1_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_1);
 	if (src1_v)
 	{
-	    LOG_INF("src1 v: %.3f", *src1_v);
+	    LOG_INF("src1 v: %.3f", (double)*src1_v);
 	}
 	else
 	{
@@ -286,7 +281,7 @@ void dbg_aem13921()
 	auto src2_v = epeas::aem1392x_get_src_voltage(aem13921_dev, epeas::src_t::_2);
 	if (src2_v)
 	{
-	    LOG_INF("src2 v: %.3f", *src2_v);
+	    LOG_INF("src2 v: %.3f", (double)*src2_v);
 	}
 	else
 	{
@@ -294,6 +289,46 @@ void dbg_aem13921()
 	}
     }
     LOG_INF("<================AEM13921=================>");
+}
+
+static uint64_t total_load_power = 0;
+static struct k_work aem_work;
+static void aem_work_handler(struct k_work *work)
+{
+    LOG_INF("AEM interrupt");
+    auto state = epeas::aem1392x_get_irq_state(aem13921_dev);
+    if (state)
+    {
+	auto s = *state;
+	LOG_INF("irq: 0x%X 0x%X", s.bytes[0], s.bytes[1]);
+	if (s.bits.apm_done)
+	{
+	    auto apm_load = epeas::aem1392x_get_apm_load(aem13921_dev);
+	    if (apm_load)
+	    {
+		if (apm_load.value().index() != 0)
+		{
+		    auto v = std::get<epeas::apm_counter_no_acc_t>(apm_load.value());
+		    total_load_power += v.value.counter;
+		    LOG_INF("APM load: %u (total %llu)", v.value.counter, total_load_power);
+		}else
+		{
+		    LOG_ERR("APM load err: unexpected value index: %zu instead of 0", apm_load.value().index());
+		}
+	    }else
+	    {
+		LOG_ERR("apm load: failed with %d %s", apm_load.error(), strerror(apm_load.error()));
+	    }
+	}
+    }else
+    {
+	LOG_ERR("irq state: failed with %d %s", state.error(), strerror(state.error()));
+    }
+}
+
+static void aem_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+{
+    k_work_submit(&aem_work);
 }
 
 int main(void)
@@ -304,6 +339,7 @@ int main(void)
     //usb_uart::setup();
     //LOG_INF("aem13921 test: %d", aem13921_hello());
     soil::setup_task();
+    pump::setup_task();
     zb::setup();
 
     int err = settings_subsys_init();
@@ -324,6 +360,8 @@ int main(void)
 	LOG_INF("aem13921 test@: %d", res.error());
     }
 
+    k_work_init(&btn0_work, btn0_work_handler);
+    k_work_init(&aem_work, aem_work_handler);
 
     err = gpio_pin_configure_dt(&btn0, GPIO_INPUT);
     if (err < 0) 
@@ -336,10 +374,25 @@ int main(void)
     if (err < 0)
 	LOG_INF("btn0 cb: %d (%s)", err, strerror(err));
 
+    err = gpio_pin_configure_dt(&aem13921_irq, GPIO_INPUT);
+    if (err < 0) 
+	LOG_INF("aem13921_irq cfg: %d (%s)", err, strerror(err));
+    err = gpio_pin_interrupt_configure_dt(&aem13921_irq, GPIO_INT_EDGE_TO_ACTIVE);
+    gpio_init_callback(&aem_cb_data, aem_isr, BIT(aem13921_irq.pin));
+    err = gpio_add_callback(aem13921_irq.port, &aem_cb_data);
+    if (err < 0)
+	LOG_INF("aem13921_irq cb: %d (%s)", err, strerror(err));
+
+    epeas::aem1392x_configure_apm(aem13921_dev, epeas::apm_cfg_t{.bits = {.src1 = false, .src2 = false, .buck = true, .ch5v = false, .mode = epeas::apm_mode_t::Counter, .win = epeas::apm_window_t::_233ms}});
+
     printk("main\r\n");
 
     while (1) {
-	dbg_aem13921();
+	if (dump_aem_info)
+	{
+	    dbg_aem13921();
+	    dump_aem_info = false;
+	}
 	k_msleep(1000);
     }
 
