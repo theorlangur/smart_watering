@@ -11,6 +11,9 @@ LOG_MODULE_REGISTER(soil, LOG_LEVEL_INF);
 
 namespace soil
 {
+    constexpr float soilMinV = 0.f;
+    constexpr float soilMaxV = 2.6f;
+
 #define SOIL_PARENT_NODE DT_NODELABEL(soil_sensors)
 
     /* Callback macro invoked for every child node */
@@ -77,8 +80,10 @@ namespace soil
 			    }else
 			    {
 				float soil_humidity = v.val1 + float(v.val2) / 1'000'000.f;
+				soil_humidity = std::clamp(soil_humidity, soilMinV, soilMaxV);
+				soil_humidity = (1.f - soil_humidity / soilMaxV) * 100.f;//soil humidity in %
 				results[i] = soil_humidity;
-				LOG_INF("(request) Soil sensor %d: measured %.2f %% humidity", (int)i, (double)soil_humidity);
+				LOG_INF("(request) Soil sensor %d: measured %.2f %% humidity (raw: %.2fV)", (int)i, (double)soil_humidity, double(v.val1) + double(v.val2) / 1'000'000.);
 			    }
 			}
 		    }else
