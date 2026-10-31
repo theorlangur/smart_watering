@@ -295,29 +295,81 @@ static uint64_t total_load_power = 0;
 static struct k_work aem_work;
 static void aem_work_handler(struct k_work *work)
 {
-    LOG_INF("AEM interrupt");
+    //LOG_INF("AEM interrupt");
     auto state = epeas::aem1392x_get_irq_state(aem13921_dev);
     if (state)
     {
 	auto s = *state;
-	LOG_INF("irq: 0x%X 0x%X", s.bytes[0], s.bytes[1]);
+	//LOG_INF("irq: 0x%X 0x%X", s.bytes[0], s.bytes[1]);
 	if (s.bits.apm_done)
 	{
-	    auto apm_load = epeas::aem1392x_get_apm_load(aem13921_dev);
-	    if (apm_load)
-	    {
-		if (apm_load.value().index() != 0)
+	    auto print_apm = [](const auto &apm, const char *pPrefix){
+		if (apm)
 		{
-		    auto v = std::get<epeas::apm_counter_no_acc_t>(apm_load.value());
-		    total_load_power += v.value.counter;
-		    LOG_INF("APM load: %u (total %llu)", v.value.counter, total_load_power);
+		    std::visit(
+			    overloaded{
+				[&](const epeas::apm_counter_acc_t &rv)
+				{
+				    if (auto v = rv.get_value())
+					LOG_INF("%s (counter acc): %llu", pPrefix, v);
+				},
+				[&](const epeas::apm_counter_no_acc_t &rv)
+				{
+				    if (rv.value.counter)
+					LOG_INF("%s (counter no acc): %u", pPrefix, rv.value.counter);
+				},
+				[&](const epeas::apm_power_meter_acc_t &rv)
+				{
+				    if (auto v = rv.get_value())
+					LOG_INF("%s (power): %llu", pPrefix, v);
+				}
+			    },
+			    *apm
+			);
 		}else
 		{
-		    LOG_ERR("APM load err: unexpected value index: %zu instead of 0", apm_load.value().index());
+		    LOG_ERR("%s: failed with %d %s", pPrefix, apm.error(), strerror(apm.error()));
+		}
+	    };
+
+	    {
+		auto apm_load = epeas::aem1392x_get_apm_load(aem13921_dev);
+		print_apm(apm_load, "APM Load");
+	    }
+	    {
+		auto apm_src1 = epeas::aem1392x_get_apm_src1(aem13921_dev);
+		print_apm(apm_src1, "APM Src1");
+	    }
+	    {
+		auto apm_src2 = epeas::aem1392x_get_apm_src2(aem13921_dev);
+		print_apm(apm_src2, "APM Src2");
+	    }
+
+	    auto apm_5v = epeas::aem1392x_get_apm_ch5v(aem13921_dev);
+	    if (apm_5v)
+	    {
+		auto v = apm_5v->value;
+		if (v)
+		{
+		    LOG_INF("APM 5v: %u", v);
 		}
 	    }else
 	    {
-		LOG_ERR("apm load: failed with %d %s", apm_load.error(), strerror(apm_load.error()));
+		LOG_ERR("apm 5v: failed with %d %s", apm_5v.error(), strerror(apm_5v.error()));
+	    }
+
+	    auto apm_err = epeas::aem1392x_get_apm_error(aem13921_dev);
+	    LOG_INF("APM Err: 0x%X", apm_err->byte);
+	}
+	if (s.bits.apm_error)
+	{
+	    auto apm_err = epeas::aem1392x_get_apm_error(aem13921_dev);
+	    if (apm_err)
+	    {
+		LOG_INF("APM Err: 0x%X", apm_err->byte);
+	    }else
+	    {
+		LOG_ERR("apm err: failed with %d %s", apm_err.error(), strerror(apm_err.error()));
 	    }
 	}
     }else
@@ -383,7 +435,41 @@ int main(void)
     if (err < 0)
 	LOG_INF("aem13921_irq cb: %d (%s)", err, strerror(err));
 
-    epeas::aem1392x_configure_apm(aem13921_dev, epeas::apm_cfg_t{.bits = {.src1 = false, .src2 = false, .buck = true, .ch5v = false, .mode = epeas::apm_mode_t::Counter, .win = epeas::apm_window_t::_233ms}});
+    epeas::aem1392x_configure_buck(aem13921_dev, epeas::buck_cfg_t{.bits = {.vload = epeas::vload_t::_3_3V, .tmult = epeas::tmult_t::x4}});
+    epeas::aem1392x_configure_apm(aem13921_dev, epeas::apm_cfg_t{.bits = {.src1 = true, .src2 = false, .buck = true, .ch5v = true, .mode = epeas::apm_mode_t::Counter, .win = epeas::apm_window_t::_233ms}});
+    epeas::aem1392x_set_apm_accumulation_period(aem13921_dev, 10);
+    {
+	epeas::irq_event_t irq_cfg;
+	irq_cfg.set_apm_done(true);
+	irq_cfg.set_apm_error(true);
+	epeas::aem1392x_configure_irq(aem13921_dev, irq_cfg);
+    }
+
+    epeas::aem1392x_commit(aem13921_dev);
+    aem_work_handler(nullptr);
+
+    {
+	auto ctrl = epeas::aem1392x_get_ctrl_state(aem13921_dev);
+	LOG_INF("Ctrl: 0x%X", *ctrl);
+    }
+
+    {
+	LOG_INF("IRQ Cfg:");
+	auto irq_cfg = epeas::aem1392x_get_irq_configuration(aem13921_dev);
+	if (irq_cfg)
+	{
+	    LOG_INF("byte0: 0x%X; byte1: 0x%X", irq_cfg.value().reg.bytes[0], irq_cfg.value().reg.bytes[1]);
+	}else
+	{
+	    LOG_ERR("Failed to get IRQ cfg: %d (%s)", irq_cfg.error(), strerror(irq_cfg.error()));
+	}
+    }
+    {
+	auto apm_cfg = epeas::aem1392x_get_apm_configuration(aem13921_dev);
+	LOG_INF("APM Cfg: 0x%X", apm_cfg->byte);
+	auto apm_win = epeas::aem1392x_get_apm_accumulation_period(aem13921_dev);
+	LOG_INF("APM Period: 0x%X", *apm_win);
+    }
 
     printk("main\r\n");
 
