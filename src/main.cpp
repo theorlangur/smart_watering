@@ -26,7 +26,7 @@
 #include "threads_snapshot.hpp"
 #include "partition_basic.hpp"
 #include "soil_task.hpp"
-#include "pump_task.hpp"
+#include "pump_and_pressure_task.hpp"
 #include "zigbee.hpp"
 
 

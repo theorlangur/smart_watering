@@ -13,3 +13,16 @@
 	};
 };
 
+/ {
+	pressure_sensor: pressure-sensor {
+		compatible = "voltage-divider";
+		status = "okay";
+		io-channels = <&adc 1>;
+		output-ohms = <10000>;
+		full-ohms = <20000>;
+	};
+};
+
+&gpio1 {
+	status = "okay";
+};

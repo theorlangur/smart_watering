@@ -15,7 +15,7 @@ set(SRCS
     src/main.cpp
     src/usb_uart.cpp
     src/soil_task.cpp
-    src/pump_task.cpp
+    src/pump_and_pressure_task.cpp
     src/zigbee.cpp
 )
 

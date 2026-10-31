@@ -1,7 +1,8 @@
-#include "pump_task.hpp"
+#include "pump_and_pressure_task.hpp"
 #include "lib_misc_helpers.hpp"
 
 #include <nrf_general/lib_msgq_typed.hpp>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/regulator.h>
 #include <zephyr/logging/log.h>
 #include <hal/nrf_timer.h>
@@ -72,6 +73,11 @@ namespace pump
 	    nrf_timer_int_enable(TimerBase(), NRF_TIMER_INT_COMPARE0_MASK | NRF_TIMER_INT_COMPARE1_MASK);
 	}
 
+	bool is_active() const
+	{
+	    return m_DutyCycleTicks > 0;
+	}
+
 	void stop()
 	{
 	    nrf_timer_int_disable(TimerBase(), NRF_TIMER_INT_COMPARE0_MASK | NRF_TIMER_INT_COMPARE1_MASK);
@@ -80,8 +86,25 @@ namespace pump
 	    set_inactive();
 	}
 
+	void deactivate()
+	{
+	    if (is_active())
+		stop();
+
+	    NRF_P2->PIN_CNF[Pin] = (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos) |
+		(GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos);
+	}
+
 	void setup()
 	{
+	    //nrf_gpio_cfg(NRF_GPIO_PIN_MAP(2, Pin)
+	    // , NRF_GPIO_PIN_DIR_OUTPUT
+	    // , NRF_GPIO_PIN_INPUT_DISCONNECT
+	    // , NRF_GPIO_PIN_NOPULL
+	    // , NRF_GPIO_PIN_S0H1
+	    // , NRF_GPIO_PIN_NOSENSE
+	    // );
+
 	    /* 1. Configure Port 2 pin as output */
 	    NRF_P2->PIN_CNF[Pin] = (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos) |
 		(GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos) |
@@ -124,6 +147,7 @@ namespace pump
 	uint32_t m_DutyCycleTicks = 0;
     };
 
+    constinit const struct device *pressure = DEVICE_DT_GET(DT_NODELABEL(pressure_sensor));
     constinit const struct device *pump_power = DEVICE_DT_GET(DT_NODELABEL(pump_power_ctrl));
     //constinit const struct device *pump_ctrl = DEVICE_DT_GET(DT_NODELABEL(pump_pwm_ctrl));
     constinit soft_pwm_t<NRF_TIMER00_S_BASE, TIMER00_IRQn, 3, 2000, false> pump_ctrl;
@@ -141,6 +165,37 @@ namespace pump
     void command(param_t p, cb_t cb, void *user)
     {
 	q << request_t{std::move(p), cb, user};
+    }
+
+
+    std::expected<float, error_t> measure_pressure_raw()
+    {
+	int err = sensor_sample_fetch(pressure);
+	if (err < 0) return std::unexpected(err);
+
+	sensor_value v;
+	err = sensor_channel_get(pressure, sensor_channel::SENSOR_CHAN_VOLTAGE, &v);
+	if (err < 0) return std::unexpected(err);
+	float pressure;
+	pressure = v.val1 + float(v.val2) / 1'000'000.f;
+	return pressure;
+    }
+
+    constinit float max_sensor_pressure = 4.7f;
+    constinit float min_sensor_pressure = 0.3f;
+    static float calibrated_max_pressure = max_sensor_pressure;
+
+    constinit water_level_cb_t g_water_level_cb = nullptr;
+    std::expected<float, error_t> measure_pressure()
+    {
+	k_msleep(2);
+	return measure_pressure_raw()
+		.and_then([](float pressure)->std::expected<float, error_t>
+		{
+		    pressure = std::clamp(0.f, calibrated_max_pressure, pressure);
+		    pressure = (pressure / calibrated_max_pressure) * 100.f;
+		    return pressure;
+		});
     }
 
 
@@ -191,13 +246,12 @@ namespace pump
 		    [&](start_t const &p)->error_t{
 			error_t err;
 			pump_ctrl.stop();
-			k_msleep(1);
+			pump_ctrl.setup();//before enabling power to the motor -> put it into duty 0%
 			if ((err = regulator_enable(pump_power)) < 0)
 			{
 			    LOG_ERR("power regulator failed: %d (%s)", err, strerror(err));
 			    return err;
 			}
-			pump_ctrl.setup();
 			//ramp up, instead of immediate
 			for(float i = 0; i < p.power_percentage; i += p.power_percentage / 10)
 			{
@@ -246,14 +300,47 @@ namespace pump
 			}
 			return 0;
 		    },
-		    [&](stop_t const &p)->error_t{
+		    [&](stop_t p)->error_t{
 			pump_ctrl.stop();
-			k_msleep(1);
+			auto water_level = measure_pressure();
 			regulator_disable(pump_power);
-			pump_ctrl.set_active();//put to GND
+			pump_ctrl.deactivate();
 			timeout = K_FOREVER;
 			pump_active = false;
 			LOG_INF("stopped");
+			if (!water_level)
+			    return water_level.error();
+			if (g_water_level_cb)
+			    g_water_level_cb(*water_level);
+			return 0;
+		    },
+		    [&](pressure_calibrate_t p)->error_t{
+			if (pump_ctrl.is_active())
+			{
+			    pump_ctrl.stop();
+			    k_msleep(1);
+			    timeout = K_FOREVER;
+			    pump_active = false;
+			}
+
+			int err;
+			if ((err = regulator_enable(pump_power)) < 0)
+			{
+			    k_msleep(50);
+			    auto r = measure_pressure_raw();
+			    if (!r)
+				return r.error();
+			    calibrated_max_pressure = r.value();
+			    if (calibrated_max_pressure < min_sensor_pressure)
+				calibrated_max_pressure = min_sensor_pressure;
+			    LOG_INF("calibrated to %.2f", calibrated_max_pressure);
+			}
+			regulator_disable(pump_power);
+			return err;
+		    },
+		    [&](pressure_reset_calibration_t p)->error_t{
+			calibrated_max_pressure = max_sensor_pressure;
+			LOG_INF("calibration reset");
 			return 0;
 		    },
 		},
@@ -264,7 +351,7 @@ namespace pump
 	}
     }
 
-    error_t setup_task()
+    error_t setup_task(water_level_cb_t water_level_cb)
     {
 	if (!device_is_ready(pump_power))
 	{
@@ -272,8 +359,8 @@ namespace pump
 	    return -ENODEV;
 	}
 	pump_ctrl.stop();
-	pump_ctrl.set_active();//put to GND
-
+	pump_ctrl.deactivate();//put to GND
+	g_water_level_cb = water_level_cb;
 	k_thread_start(pump_thread_obj);
 	return 0;
     }
