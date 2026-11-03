@@ -32,11 +32,12 @@
 
 &uart00 { 
 	status = "okay"; 
-	current-speed = <115200>;
+	/* current-speed = <115200>; */
+	current-speed = <57600>;
 	pinctrl-0 = <&uart00_default>;
 	pinctrl-1 = <&uart00_sleep>;
 	pinctrl-names = "default", "sleep";
-	hw-flow-control;
+	/* hw-flow-control; */
 };
 
 &gpio2 {
