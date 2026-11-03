@@ -433,50 +433,50 @@ int main(void)
     if (err < 0)
 	LOG_INF("btn0 cb: %d (%s)", err, strerror(err));
 
-    err = gpio_pin_configure_dt(&aem13921_irq, GPIO_INPUT);
-    if (err < 0) 
-	LOG_INF("aem13921_irq cfg: %d (%s)", err, strerror(err));
-    err = gpio_pin_interrupt_configure_dt(&aem13921_irq, GPIO_INT_EDGE_TO_ACTIVE);
-    gpio_init_callback(&aem_cb_data, aem_isr, BIT(aem13921_irq.pin));
-    err = gpio_add_callback(aem13921_irq.port, &aem_cb_data);
-    if (err < 0)
-	LOG_INF("aem13921_irq cb: %d (%s)", err, strerror(err));
+	//   err = gpio_pin_configure_dt(&aem13921_irq, GPIO_INPUT);
+	//   if (err < 0) 
+	//LOG_INF("aem13921_irq cfg: %d (%s)", err, strerror(err));
+	//   err = gpio_pin_interrupt_configure_dt(&aem13921_irq, GPIO_INT_EDGE_TO_ACTIVE);
+	//   gpio_init_callback(&aem_cb_data, aem_isr, BIT(aem13921_irq.pin));
+	//   err = gpio_add_callback(aem13921_irq.port, &aem_cb_data);
+	//   if (err < 0)
+	//LOG_INF("aem13921_irq cb: %d (%s)", err, strerror(err));
 
-    epeas::aem1392x_configure_buck(aem13921_dev, epeas::buck_cfg_t{.bits = {.vload = epeas::vload_t::_3_3V, .tmult = epeas::tmult_t::x4}});
-    epeas::aem1392x_configure_apm(aem13921_dev, epeas::apm_cfg_t{.bits = {.src1 = true, .src2 = false, .buck = true, .ch5v = true, .mode = epeas::apm_mode_t::Counter, .win = epeas::apm_window_t::_233ms}});
-    epeas::aem1392x_set_apm_accumulation_period(aem13921_dev, 10);
-    {
-	epeas::irq_event_t irq_cfg;
-	irq_cfg.set_apm_done(true);
-	irq_cfg.set_apm_error(true);
-	epeas::aem1392x_configure_irq(aem13921_dev, irq_cfg);
-    }
+	//   epeas::aem1392x_configure_buck(aem13921_dev, epeas::buck_cfg_t{.bits = {.vload = epeas::vload_t::_3_3V, .tmult = epeas::tmult_t::x4}});
+	//   epeas::aem1392x_configure_apm(aem13921_dev, epeas::apm_cfg_t{.bits = {.src1 = true, .src2 = false, .buck = true, .ch5v = true, .mode = epeas::apm_mode_t::Counter, .win = epeas::apm_window_t::_233ms}});
+	//   epeas::aem1392x_set_apm_accumulation_period(aem13921_dev, 10);
+	//   {
+	//epeas::irq_event_t irq_cfg;
+	//irq_cfg.set_apm_done(true);
+	//irq_cfg.set_apm_error(true);
+	//epeas::aem1392x_configure_irq(aem13921_dev, irq_cfg);
+	//   }
+	//
+	//   epeas::aem1392x_commit(aem13921_dev);
+	//   aem_work_handler(nullptr);
 
-    epeas::aem1392x_commit(aem13921_dev);
-    aem_work_handler(nullptr);
-
-    {
-	auto ctrl = epeas::aem1392x_get_ctrl_state(aem13921_dev);
-	LOG_INF("Ctrl: 0x%X", *ctrl);
-    }
-
-    {
-	LOG_INF("IRQ Cfg:");
-	auto irq_cfg = epeas::aem1392x_get_irq_configuration(aem13921_dev);
-	if (irq_cfg)
-	{
-	    LOG_INF("byte0: 0x%X; byte1: 0x%X", irq_cfg.value().reg.bytes[0], irq_cfg.value().reg.bytes[1]);
-	}else
-	{
-	    LOG_ERR("Failed to get IRQ cfg: %d (%s)", irq_cfg.error(), strerror(irq_cfg.error()));
-	}
-    }
-    {
-	auto apm_cfg = epeas::aem1392x_get_apm_configuration(aem13921_dev);
-	LOG_INF("APM Cfg: 0x%X", apm_cfg->byte);
-	auto apm_win = epeas::aem1392x_get_apm_accumulation_period(aem13921_dev);
-	LOG_INF("APM Period: 0x%X", *apm_win);
-    }
+	//   {
+	//auto ctrl = epeas::aem1392x_get_ctrl_state(aem13921_dev);
+	//LOG_INF("Ctrl: 0x%X", *ctrl);
+	//   }
+	//
+	//   {
+	//LOG_INF("IRQ Cfg:");
+	//auto irq_cfg = epeas::aem1392x_get_irq_configuration(aem13921_dev);
+	//if (irq_cfg)
+	//{
+	//    LOG_INF("byte0: 0x%X; byte1: 0x%X", irq_cfg.value().reg.bytes[0], irq_cfg.value().reg.bytes[1]);
+	//}else
+	//{
+	//    LOG_ERR("Failed to get IRQ cfg: %d (%s)", irq_cfg.error(), strerror(irq_cfg.error()));
+	//}
+	//   }
+	//   {
+	//auto apm_cfg = epeas::aem1392x_get_apm_configuration(aem13921_dev);
+	//LOG_INF("APM Cfg: 0x%X", apm_cfg->byte);
+	//auto apm_win = epeas::aem1392x_get_apm_accumulation_period(aem13921_dev);
+	//LOG_INF("APM Period: 0x%X", *apm_win);
+	//   }
 
     printk("main\r\n");
 
