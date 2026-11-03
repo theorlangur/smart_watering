@@ -92,9 +92,16 @@ static void btn0_work_handler(struct k_work *work)
 static void btn0_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
     /* Defer PM state change out of interrupt context */
-    soil::run_measurements({.soil_sensors_mask = 0b0111, .callback = measure_soil_handler});
+    //soil::run_measurements({.soil_sensors_mask = 0b0111, .callback = measure_soil_handler});
     //pump::command(pump::start_t{.duration = 10000, .power_percentage = 80}, nullptr, nullptr);
+    pump::command(pump::pressure_measure_t{}, nullptr, nullptr);
     k_work_submit(&btn0_work);
+}
+
+
+void on_pressure_measured(float level_percentage)
+{
+    LOG_INF("Received pressure measurement: %.2f", level_percentage);
 }
 
 static const struct device *const aem13921_dev = DEVICE_DT_GET(DT_NODELABEL(aem13921));
@@ -391,7 +398,7 @@ int main(void)
     //usb_uart::setup();
     //LOG_INF("aem13921 test: %d", aem13921_hello());
     soil::setup_task();
-    pump::setup_task();
+    pump::setup_task(on_pressure_measured);
     zb::setup();
 
     int err = settings_subsys_init();
