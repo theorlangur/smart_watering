@@ -192,7 +192,7 @@ namespace pump
 	return measure_pressure_raw()
 		.and_then([](float pressure)->std::expected<float, error_t>
 		{
-		    pressure = std::clamp(0.f, calibrated_max_pressure, pressure);
+		    pressure = std::clamp(pressure, 0.f, calibrated_max_pressure);
 		    pressure = (pressure / calibrated_max_pressure) * 100.f;
 		    return pressure;
 		});
