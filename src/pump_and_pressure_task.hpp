@@ -28,8 +28,11 @@ namespace pump
     struct pressure_reset_calibration_t//get the current voltage of pressure sensor and consider it 100% water level
     {
     };
+    struct pressure_measure_t
+    {
+    };
 
-    using param_t = std::variant<start_t, extend_duration_t, set_duration_t, stop_t, pressure_calibrate_t, pressure_reset_calibration_t>;
+    using param_t = std::variant<start_t, extend_duration_t, set_duration_t, stop_t, pressure_calibrate_t, pressure_reset_calibration_t, pressure_measure_t>;
     using error_t = int;
     using cb_t = void(*)(error_t err, param_t const& p, void *pUserArg);
     using water_level_cb_t = void(*)(float level_percentage);

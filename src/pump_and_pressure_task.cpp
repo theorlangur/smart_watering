@@ -325,6 +325,8 @@ namespace pump
 
 			int err;
 			if ((err = regulator_enable(pump_power)) < 0)
+			    return err;
+
 			{
 			    k_msleep(50);
 			    auto r = measure_pressure_raw();
@@ -341,6 +343,24 @@ namespace pump
 		    [&](pressure_reset_calibration_t p)->error_t{
 			calibrated_max_pressure = max_sensor_pressure;
 			LOG_INF("calibration reset");
+			return 0;
+		    },
+		    [&](pressure_measure_t p)->error_t{
+			LOG_INF("pressure measure");
+			int err;
+			if ((err = regulator_enable(pump_power)) < 0)
+			    return err;
+			ScopeExit onExit = []{ regulator_disable(pump_power); };
+
+			{
+			    k_msleep(50);
+			    auto water_level = measure_pressure();
+			    if (!water_level)
+				return water_level.error();
+			    LOG_INF("pressure measure results: %.2f", *water_level);
+			    if (g_water_level_cb)
+				g_water_level_cb(*water_level);
+			}
 			return 0;
 		    },
 		},
